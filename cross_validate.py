@@ -1,9 +1,6 @@
 from datetime import datetime
 import numpy as np
-try:
-    from python_code.utils import regcov
-except ModuleNotFoundError:
-    from utils import regcov
+from utils import regcov
 
 def cross_validate(FUN, dates, r, params):
     """

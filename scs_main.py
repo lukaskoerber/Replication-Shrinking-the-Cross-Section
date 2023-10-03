@@ -2,12 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import os
-try:
-    from python_code.load_managed_portfolios import load_managed_portfolios
-    from python_code.SCS_L2est import SCS_L2est
-except ModuleNotFoundError:
-    from load_managed_portfolios import load_managed_portfolios
-    from SCS_L2est import SCS_L2est
+from load_managed_portfolios import load_managed_portfolios
+from SCS_L2est import SCS_L2est
 
 # Options
 daily = True
