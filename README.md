@@ -47,14 +47,25 @@ Comparison of original results from the paper and replication results from the P
 #### Replicated
 ![Replicated Degrees of Freedom Plot](results_export/degrees_of_freedom.png)
 
+## SDF Coefficients
+
 ### Coefficient Paths
 > TODO
 
 #### Original
-![Original Coefficient Paths Plot](results_export/coefficient_paths_original.png)
+![Original Coefficient Paths Plot](results_export/coefficients_paths_original.png)
 
 #### Replicated
 ![Replicated Coefficient Paths Plot](results_export/coefficients_paths.png)
+
+### t-Statistic Paths
+> TODO
+
+#### Original
+![Original Coefficient Paths Plot](results_export/tstats_paths_original.png)
+
+#### Replicated
+![Replicated Coefficient Paths Plot](results_export/tstats_paths.png)
 
 
 

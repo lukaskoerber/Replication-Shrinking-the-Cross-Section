@@ -2,12 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
-try:
-    from python_code.utils import demarket, regcov, l2est
-    from python_code.cross_validate import cross_validate
-except ModuleNotFoundError:
-    from utils import demarket, regcov, l2est
-    from cross_validate import cross_validate
+from utils import demarket, regcov, l2est
+from cross_validate import cross_validate
 
 def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     """
@@ -324,7 +320,7 @@ def plot_dof(df, x, p):
         plt.show()
 
     if p['results_export']:
-        plt.savefig('python_code/results_export/degrees_of_freedom.png', dpi=300, bbox_inches='tight')
+        plt.savefig('results_export/degrees_of_freedom.png', dpi=300, bbox_inches='tight')
 
 def plot_L2coefpaths(x, phi, iL2opt, anomalies, ylbl, p):
     """
@@ -385,7 +381,10 @@ def plot_L2coefpaths(x, phi, iL2opt, anomalies, ylbl, p):
         plt.show()
 
     if p['results_export']:
-        plt.savefig('python_code/results_export/coefficients_paths.png', dpi=300, bbox_inches='tight')
+        if ylbl == 'SDF Coefficient, $b$':
+            plt.savefig('results_export/coefficients_paths.png', dpi=300, bbox_inches='tight')
+        elif ylbl == 'SDF Coefficient $t$-statistic':
+            plt.savefig('results_export/tstats_paths.png', dpi=300, bbox_inches='tight')
 
 
 def plot_L2cv(x, objL2, p):
@@ -432,7 +431,7 @@ def plot_L2cv(x, objL2, p):
         plt.show()
 
     if p['results_export']:
-        plt.savefig('python_code/results_export/cross_validation.png', dpi=300, bbox_inches='tight')
+        plt.savefig('results_export/cross_validation.png', dpi=300, bbox_inches='tight')
 
 
 
@@ -470,4 +469,4 @@ def table_L2coefs(phi, se, anomalies, p):
 
     # export as a latex formatted table
     if p['results_export']:
-        df.to_latex('python_code/results_export/coefficients_table.tex', index=False)
+        df.to_latex('results_export/coefficients_table.tex', index=False)

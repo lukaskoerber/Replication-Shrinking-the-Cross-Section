@@ -25,7 +25,7 @@ oos_test_date = datetime.strptime('01JAN2005', '%d%b%Y')
 run_folder = datetime.today().strftime('%d%b%Y').upper() + "/"
 
 # Paths
-projpath = 'python_code/'
+projpath = ''
 datapath = os.path.join(projpath, 'Data')
 instrpath = os.path.join(datapath, 'instruments')
 
