@@ -41,7 +41,7 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         'kfold': 3,
         'oos_test_date': dates.iloc[-1],
         'freq': freq,
-        'rotate_PC': False,
+        'rotate_PC': True,
         'demarket_conditionally': False,
         'demarket_unconditionally': True,
         'devol_conditionally': False,
@@ -143,11 +143,13 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         r_train = np.dot(r_train, Q)
         r_test = np.dot(r_test, Q)
         anomalies = ['PC' + str(i) for i in range(1, n + 1)]
+        r_train = pd.DataFrame(r_train, index=dates, columns=anomalies)
+        # r_test = pd.DataFrame(r_test, index=dates, columns=anomalies) TODO: Uncomment once OOS data there
 
     # Compute first and second moments
     X = regcov(r_train)
-    y = np.mean(r_train, axis=0)#.reshape(-1, 1)  # making y a column vector
-    #X_test = regcov(r_test)  # TODO: test does not have data in it!!
+    y = np.mean(r_train, axis=0)
+    #X_test = regcov(r_test) 
     #y_test = np.mean(r_test, axis=0)#.reshape(-1, 1)  # making y_test a column vector
 
     # Maximum in-sample SR
@@ -177,7 +179,6 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     parameters['d'] = d
     parameters['Xinv'] = Xinv
 
-
     # Functions to map L2pen <-> kappa
     kappa2pen = lambda kappa, T, X, p: p['freq'] * np.trace(X) / T / (kappa ** 2)
 
@@ -190,7 +191,8 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
 
     for i in lr:
         params = parameters.copy()  # Make a copy of p to avoid modifying the original
-        params['L2pen'] = kappa2pen(2 ** (i - lm), T, X, parameters)
+        kappa = 2 ** (i - lm)
+        params['L2pen'] = kappa2pen(kappa, T, X, parameters)
         z[:, i - 1] = l2est(X, y, params)[0]
 
     # Coefficient stabilize condition
@@ -217,14 +219,13 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         print(i)
         # Estimate parameters at each grid point
         params['L2pen'] = l[i]
-        # Note: You need to define the l2est function in Python or provide its MATLAB code for translation
+
         phi[:, i], _, se[:, i] = l2est(X, y, params, True)
 
         # Cross validate estimated parameters
         params['L2pen'] = lCV[i]
-        # Note: You need to define the cross_validate function in Python or provide its MATLAB code for translation
         objL2[i, :], params, objL2_folds_ = cross_validate(l2est, dates.values, r_train, params)
-        objL2_folds[i, :] = objL2_folds_[:, 1] # Python is 0-indexed
+        objL2_folds[i, :] = objL2_folds_[:, 1] 
 
         # Store OOS MVE portfolios for each CV run
         MVE[i] = params['cv_MVE']
