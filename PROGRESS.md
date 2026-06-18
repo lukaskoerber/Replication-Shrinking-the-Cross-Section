@@ -19,10 +19,11 @@ write-ups are in `replication/` (`plan.md`, `replication_report.md`, `REPLICATIO
 `results_export/`) remain as the pre-existing L2-only replication and are unchanged in
 substance by this work.
 
-A **scoped extension plan** (not yet implemented) lives under
-`replication/extensions/sr_objective/`: a selectable cross-validation objective that
-maximizes the cross-validated Sharpe ratio, to sit alongside the existing cross-sectional
-R² objective.
+A **scoped extension** lives under `replication/extensions/sr_objective/`: a selectable
+cross-validation objective that maximizes the cross-validated Sharpe ratio, alongside the
+existing cross-sectional R² objective. It is now **implemented and verified** (added to
+`scs_core.py`; comparison graphs in `replication/build/output/`), kept as a reported
+diagnostic — it does not displace the CSR²-selected model.
 
 ## Sessions
 
@@ -45,6 +46,15 @@ R² objective.
   objective is a reported diagnostic only and does not replace the CSR2-selected model.
 - Artifacts (plan + machine-readable manifest/targets/task-graph + pinned assumptions)
   written to `replication/extensions/sr_objective/`.
+- **Then implemented and verified it** (same day): added `cross_validate_sr` /
+  `sharpe_annual` / a `{CSR2,SR}` dispatcher to `scs_core.py`, ran the SR objective across
+  the κ grid, and reproduced the model-selection graphs under both objectives to see the
+  difference. Finding (as predicted): because the Sharpe ratio is scale-invariant, the
+  SR(κ) curve is **weakly identified** — its ±1 s.e. band spans the whole grid, vs CSR²'s
+  sharp peak at κ=0.283 — and at the SR optimum the SDF *direction* is ~96% identical to
+  the CSR² SDF while its magnitude collapses. All sanity checks pass; the SR objective is a
+  reported diagnostic and does not change the canonical model. See
+  `replication/extensions/sr_objective/RESULTS.md`.
 
 ### 2026-06-18 — Full replication: plan committee → execution → log
 

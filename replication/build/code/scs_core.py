@@ -410,6 +410,181 @@ def cross_validate_csr2(dates, r, l_value, kfold, freq):
 
 
 # ---------------------------------------------------------------------------
+# 9b. Cross-validated Sharpe-ratio objective  [A-SR1..15]  (EXTENSION)
+# ---------------------------------------------------------------------------
+# Extension on top of KNS (2020): a selectable CV objective that maximizes the
+# cross-validated annualized Sharpe ratio of the SDF-implied MVE portfolio,
+# alongside the existing cross-sectional R^2 objective (cross_validate_csr2).
+# Reported diagnostic only [A-SR15]; does not drive any downstream artifact.
+# Design + pinned assumptions: replication/extensions/sr_objective/{plan.md,
+# open_questions.md}.  All existing functions above are unchanged.
+# ---------------------------------------------------------------------------
+def sharpe_annual(x, freq):
+    """
+    Annualized Sharpe ratio of a realized return series.
+
+    SR = mean(x) / std(x, ddof=0) * sqrt(freq)               [A-SR1, A-SR2, A-SR14]
+
+    Scale-invariant in x (homogeneous degree 0): SR(c*x) = sign(c)*SR(x), and for
+    c>0 exactly SR(c*x) = SR(x) — this is the property exploited by the SR
+    objective (it sees only the *direction* of the SDF coefficient vector b, not
+    its magnitude) [A-SR10].
+
+    Degenerate-denominator guard [A-SR8 / B2]: if std(x, ddof=0) <= 1e-12 return
+    np.nan (never +/-inf) so a degenerate fold drops out of nan-aware aggregation
+    and can never win selection.
+
+    Parameters
+    ----------
+    x    : (n,) realized return series
+    freq : annualization frequency (252 daily)
+    """
+    x = np.asarray(x, dtype=float).reshape(-1)
+    sd = np.std(x, ddof=0)                                    # [A-SR14] ddof=0
+    if sd <= 1e-12:                                           # [A-SR8 / B2]
+        return np.nan
+    return float(np.mean(x) / sd * np.sqrt(freq))
+
+
+def cross_validate_sr(dates, r, l_value, kfold, freq):
+    """
+    K-fold contiguous CV of the realized-MVE annualized Sharpe ratio for one
+    penalty.  EXTENSION mirroring cross_validate_csr2 exactly (same folds, same
+    [A-C6]/[A-SR4] CV penalty rescale, same TRAIN-only moments / no look-ahead).
+
+    For each contiguous fold f (the TEST block):
+      - TRAIN = all other rows; X_tr = regcov(TRAIN), y_tr = mean(TRAIN);
+      - b estimated at l_used = l_value / (1 - 1/kfold)        [A-SR4 = A-C6];
+      - OOS realized MVE return series  r_mve_oos = te @ b      [A-SR1, A-SR6]
+        (te = the RAW held-out return block, NOT its moments — this is a
+        deliberately different object from CSR2's moment-based Sigma_te @ b);
+      - IS realized MVE return series   r_mve_is  = tr @ b;
+      - per-fold  is_sr[f]  = sharpe_annual(r_mve_is, freq),
+                  oos_sr[f] = sharpe_annual(r_mve_oos, freq);
+      - accumulate r_mve_oos into a pool for the pooled (concatenated) diagnostic.
+
+    Selection is on the per-fold-averaged OOS SR [A-SR11 / B3]; pooled_sr is a
+    reported diagnostic.  Aggregation is nan-aware [A-SR12] so a degenerate fold
+    (std <= 1e-12 -> NaN, [A-SR8/B2]) drops out cleanly.
+
+    No look-ahead [A-SR5]: train/test indices are asserted disjoint; b and its
+    moments come strictly from the TRAIN block; OOS SR from the TEST block only.
+
+    Caveat [A-SR14]: the CV-OOS-SR *level* is upward-biased (the penalty is chosen
+    on the whole sample) and is used for *ranking* kappa only, not as a true OOS
+    Sharpe estimate (mirrors the paper's p.20 caveat).
+
+    Returns  (mirrors the cross_validate_csr2 dict layout)
+    -------
+    dict with:
+      is_mean, is_se, oos_mean, oos_se   (nan-aware; se = nanstd across folds
+                                          / sqrt(kfold), [A-SR9])
+      is_folds, oos_folds                (per-fold arrays)
+      pooled_sr                          (SR of concatenated OOS series, [A-SR3])
+    """
+    R = np.asarray(r, dtype=float)
+    n = R.shape[0]
+    assert pd.DatetimeIndex(dates).is_monotonic_increasing, "dates not sorted"
+    folds = cvpartition_contiguous(n, kfold)
+    l_used = l_value / (1.0 - 1.0 / kfold)             # [A-SR4 = A-C6] CV rescale
+
+    is_vals = np.full(kfold, np.nan)
+    oos_vals = np.full(kfold, np.nan)
+    oos_pool = []
+    for f, idx_test in enumerate(folds):
+        idx_train = np.setdiff1d(np.arange(n), idx_test, assume_unique=False)
+        # [A-SR5] no look-ahead: train/test strictly disjoint.
+        assert np.intersect1d(idx_train, idx_test).size == 0, \
+            "train/test indices overlap (look-ahead)"
+        tr = R[idx_train, :]
+        te = R[idx_test, :]
+
+        X_tr = regcov(tr)
+        y_tr = tr.mean(axis=0)
+
+        b, _ = l2est(X_tr, y_tr, l_used, len(idx_train))   # b from TRAIN only
+
+        r_mve_is = tr @ b                                  # [A-SR1] IS MVE series
+        r_mve_oos = te @ b                                 # [A-SR6] OOS MVE series
+
+        is_vals[f] = sharpe_annual(r_mve_is, freq)
+        oos_vals[f] = sharpe_annual(r_mve_oos, freq)
+        oos_pool.append(r_mve_oos)
+
+    pooled = sharpe_annual(np.concatenate(oos_pool), freq)  # [A-SR3] diagnostic
+
+    return {
+        "is_mean": float(np.nanmean(is_vals)),
+        "is_se": float(np.nanstd(is_vals) / np.sqrt(kfold)),
+        "oos_mean": float(np.nanmean(oos_vals)),
+        "oos_se": float(np.nanstd(oos_vals) / np.sqrt(kfold)),
+        "is_folds": is_vals,
+        "oos_folds": oos_vals,
+        "pooled_sr": pooled,
+    }
+
+
+def select_kappa_1se_parsimony(kappa_grid, oos_mean, oos_se):
+    """
+    Deterministic 1-SE-toward-parsimony selection on a flat / scale-invariant
+    OOS objective curve  [A-SR7 / B1].
+
+    The SR(kappa) curve is scale-invariant in b and can be near-flat with ties, so
+    a plain argmax is ill-conditioned.  Rule:
+      - i_max  = nanargmax(oos_mean);
+      - thresh = oos_mean[i_max] - oos_se[i_max]   (one s.e. below the max);
+      - among all grid points whose oos_mean >= thresh (the "within-1-s.e. band"),
+        choose the MOST-SHRUNK kappa, i.e. the SMALLEST kappa value.
+
+    "Weakly identified" when the band is wide (n_in_band large / band_width large):
+    many penalties are statistically indistinguishable and the choice of the most
+    shrunk one is a parsimony convention, not a sharp optimum.
+
+    Returns
+    -------
+    i_sel      : selected grid index (smallest-kappa point in band)
+    kappa_sel  : kappa_grid[i_sel]
+    band_width : max(kappa in band) - min(kappa in band)
+    n_in_band  : number of grid points within 1 s.e. of the max
+    """
+    kappa_grid = np.asarray(kappa_grid, dtype=float)
+    oos_mean = np.asarray(oos_mean, dtype=float)
+    oos_se = np.asarray(oos_se, dtype=float)
+    i_max = int(np.nanargmax(oos_mean))
+    thresh = oos_mean[i_max] - oos_se[i_max]
+    in_band = np.where(oos_mean >= thresh)[0]
+    assert in_band.size > 0, "empty 1-s.e. band"
+    kappas_in_band = kappa_grid[in_band]
+    # most-shrunk = smallest kappa value
+    i_sel = int(in_band[int(np.argmin(kappas_in_band))])
+    band_width = float(np.max(kappas_in_band) - np.min(kappas_in_band))
+    n_in_band = int(in_band.size)
+    return i_sel, float(kappa_grid[i_sel]), band_width, n_in_band
+
+
+def cross_validate(objective, dates, r, l_value, kfold, freq):
+    """
+    Selectable CV-objective dispatcher  [A-SR15 extension].
+
+    objective in {'CSR2', 'SR'}:
+      - 'CSR2' -> cross_validate_csr2 (cross-sectional R^2, eq. 30; the canonical
+        objective used elsewhere in the replication);
+      - 'SR'   -> cross_validate_sr   (realized-MVE annualized Sharpe ratio).
+    Both objectives are MAXIMIZED.  Any other value raises ValueError.
+
+    Note the two return dicts differ slightly: the 'SR' dict additionally carries
+    'pooled_sr'.  Both share is_mean/is_se/oos_mean/oos_se/is_folds/oos_folds so a
+    common selector (e.g. select_kappa_1se_parsimony) works on either.
+    """
+    if objective == "CSR2":
+        return cross_validate_csr2(dates, r, l_value, kfold, freq)
+    elif objective == "SR":
+        return cross_validate_sr(dates, r, l_value, kfold, freq)
+    else:
+        raise ValueError(f"unknown objective {objective!r}; use 'CSR2' or 'SR'")
+
+
+# ---------------------------------------------------------------------------
 # 10. Effective degrees of freedom  (fix C18)
 # ---------------------------------------------------------------------------
 def effective_dof(d, l_list):
@@ -433,3 +608,30 @@ def effective_dof(d, l_list):
     d = np.asarray(d, dtype=float).reshape(-1, 1)
     l = np.asarray(l_list, dtype=float).reshape(1, -1)
     return np.sum(d / (d + l), axis=0)
+
+
+# ---------------------------------------------------------------------------
+# Self-checks for the SR extension (run only as a script; importable above).
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    rng = np.random.default_rng(0)                       # fixed seed (determinism)
+    # --- sharpe_annual scale-invariance [A-SR10] ---
+    x = rng.standard_normal(2000) * 0.01 + 0.0003
+    base = sharpe_annual(x, 252)
+    for c in (0.5, 2.0, 100.0):
+        assert abs(sharpe_annual(c * x, 252) - base) < 1e-10, "SR not scale-invariant"
+    # --- degenerate-denominator guard [A-SR8/B2] ---
+    assert np.isnan(sharpe_annual(np.ones(100), 252)), "zero-vol must be NaN"
+    # --- no-lookahead inside cross_validate_sr [A-SR5] (asserted in-fn) ---
+    T, H = 600, 5
+    R = rng.standard_normal((T, H)) * 0.01 + 0.0002
+    dts = pd.date_range("2000-01-01", periods=T, freq="B")
+    out = cross_validate_sr(dts, R, l_value=1.0, kfold=3, freq=252)
+    assert set(out) >= {"oos_mean", "oos_se", "pooled_sr", "oos_folds"}
+    # --- dispatcher ---
+    assert cross_validate("SR", dts, R, 1.0, 3, 252)["oos_mean"] == out["oos_mean"]
+    try:
+        cross_validate("BOGUS", dts, R, 1.0, 3, 252); raise AssertionError("no ValueError")
+    except ValueError:
+        pass
+    print("scs_core SR-extension self-checks passed.")

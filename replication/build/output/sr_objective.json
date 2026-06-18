@@ -1,0 +1,29 @@
+{
+  "kappa_SR_opt": 0.01,
+  "kappa_SR_argmax": 2.171534093275925,
+  "within_1se_band_width": 31.990000000000006,
+  "n_in_band": 100,
+  "oos_annual_SR_at_SRopt": 1.8158288887881973,
+  "pooled_SR_at_SRopt": 1.3087878799122763,
+  "kappa_CSR2_opt": 0.2828966266355465,
+  "oos_SR_at_CSR2opt": 2.0493495175385457,
+  "oos_CSR2_at_SRopt": 0.0008585554614613337,
+  "oos_CSR2_at_CSR2opt": 0.25181585242956483,
+  "is_max_annual_SR_ceiling": 3.5378332671179615,
+  "per_fold_oos_SR_at_SRopt": [
+    3.471670049469451,
+    1.0734352382836712,
+    0.9023813786114696
+  ],
+  "oos_SR_at_SR_argmax": 2.5933269124750473,
+  "sanity": {
+    "scale_invariance_max_diff": 0.0,
+    "perfold_vs_pooled_gridgap": 0,
+    "sr_ge_at_SRopt_vs_CSR2opt": false,
+    "sr_ge_at_SRargmax_vs_CSR2opt": true,
+    "oos_below_ceiling": true,
+    "oos_below_ceiling_argmax": true
+  },
+  "bias_caveat": "CV-optimal OOS SR level is upward-biased (penalty chosen on whole sample); used for ranking only",
+  "weak_identification_note": "n_in_band=100 of 100 grid points within 1 s.e. of the SR max; weakly identified (wide flat band)"
+}
