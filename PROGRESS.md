@@ -19,7 +19,32 @@ write-ups are in `replication/` (`plan.md`, `replication_report.md`, `REPLICATIO
 `results_export/`) remain as the pre-existing L2-only replication and are unchanged in
 substance by this work.
 
+A **scoped extension plan** (not yet implemented) lives under
+`replication/extensions/sr_objective/`: a selectable cross-validation objective that
+maximizes the cross-validated Sharpe ratio, to sit alongside the existing cross-sectional
+R² objective.
+
 ## Sessions
+
+### 2026-06-18 — Extension plan: cross-validated Sharpe-ratio objective
+
+- **Planned** (did not implement) one requested add-on: a selectable CV objective that
+  maximizes the cross-validated Sharpe ratio of the SDF/MVE portfolio, alongside the
+  existing cross-sectional R² objective — "only for having it." It reuses the existing
+  pipeline (de-marketed/devol'd returns, κ grid, K=3 folds, L2 estimator) and adds only a
+  `cross_validate_sr` function plus a selectable dispatcher; no new data.
+- **Key insight pinned:** the Sharpe ratio is scale-invariant in the SDF coefficients, so
+  the objective responds only to the *direction* of the coefficient vector across PCs (not
+  to level shrinkage) — which can make the SR(κ) curve flat. This drove three guards a
+  skeptic required and signed off on: a deterministic 1-SE-toward-parsimony tie-break, a
+  degenerate-denominator guard, and a per-fold-vs-pooled cross-check.
+- **Validation is sanity-only** (the paper never selects on Sharpe, so no target number):
+  the objective must select a finite κ, give a plausible OOS Sharpe below the in-sample
+  ceiling (√maxSR2 ≈ 3.5, a look-ahead red flag if exceeded), stay consistent with the
+  CSR2-selected model, pass a scale-invariance unit test, and have no look-ahead. The SR
+  objective is a reported diagnostic only and does not replace the CSR2-selected model.
+- Artifacts (plan + machine-readable manifest/targets/task-graph + pinned assumptions)
+  written to `replication/extensions/sr_objective/`.
 
 ### 2026-06-18 — Full replication: plan committee → execution → log
 
