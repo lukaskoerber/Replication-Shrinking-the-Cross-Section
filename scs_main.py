@@ -39,24 +39,37 @@ else:
 np.random.seed(0)
 
 # Default estimation parameters
-default_params = {
+parameters = {
     'gridsize': 100,
-    'contour_levelstep': 0.01,
+    'method': 'CV',
     'objective': 'CSR2',
-    'rotate_PC': False,
-    'devol_unconditionally': False,
+    'ignore_scale': False,
     'kfold': 3,
+    'freq': freq,
+    'rotate_PC': True,
+    'demarket_conditionally': False,
+    'demarket_unconditionally': True,
+    'devol_conditionally': False,
+    'devol_unconditionally': True,
     'plot_dof': True,
     'plot_coefpaths': True,
     'plot_objective': True,
-    'fig_options': {'fig_sizes': ['width=half'], 'close_after_print': True}
+    'line_width': 1.5,
+    'font_size': 10,
+    'L2_max_legends': 20,
+    'L2_sort_loc': 'opt',
+    'L1_log_scale': True,
+    'L2_log_scale': True,
+    'legend_loc': 'best',
+    'results_export': True,
+    'show_plot': False
 }
 
 # Load FF factors (assuming function has been translated)
 # dd, re, _ = load_ff_anomalies(datapath, daily, t0, tN)
 
 # Parameters setup
-p = default_params
+p = parameters.copy()
 
 if interactions:
     p['kfold'] = 2

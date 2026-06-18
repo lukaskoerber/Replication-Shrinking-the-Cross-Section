@@ -1,0 +1,13 @@
+{
+  "result_id": "fig2a_ff25_L2_peak",
+  "cells": [
+    {
+      "label": "peak_OOS_CSR2",
+      "achieved": 0.44622322374854884
+    },
+    {
+      "label": "peak_kappa",
+      "achieved": 0.24806393795359294
+    }
+  ]
+}

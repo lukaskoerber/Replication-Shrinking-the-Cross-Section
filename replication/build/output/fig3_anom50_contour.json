@@ -1,0 +1,28 @@
+{
+  "result_id": "fig3_anom50_contour",
+  "grid": {
+    "n_kappa": 30,
+    "kappa_lo": 0.05,
+    "kappa_hi": 3.0,
+    "n_gamma1": 80,
+    "kfold": 3,
+    "H": 50
+  },
+  "raw_panel": {
+    "best_oos_csr2": 0.2513048224327559,
+    "best_at_nnz": 50,
+    "oos_at_nnz5": 0.03794407924137485,
+    "oos_at_nnz45": 0.2456651456184014,
+    "vertical_ridge_need_many_nonzero": true
+  },
+  "pc_panel": {
+    "best_oos_csr2": 0.2513048224327565,
+    "best_at_nnz": 50,
+    "oos_at_nnz4": 0.21099419767552255,
+    "oos_at_nnz5": null,
+    "oos_at_nnz45": 0.25093462163388175,
+    "high_oos_at_low_nonzero": true
+  },
+  "pc_beats_raw_at_low_nonzero": true,
+  "runtime_sec": 10.5
+}

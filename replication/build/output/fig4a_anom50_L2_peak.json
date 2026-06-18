@@ -1,0 +1,17 @@
+{
+  "result_id": "fig4a_anom50_L2_peak",
+  "cells": [
+    {
+      "label": "peak_OOS_CSR2",
+      "achieved": 0.25181585242956483
+    },
+    {
+      "label": "peak_kappa",
+      "achieved": 0.2828966266355465
+    },
+    {
+      "label": "ps_eta1_peak",
+      "achieved": 0.0629298234209988
+    }
+  ]
+}

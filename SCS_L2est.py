@@ -30,38 +30,9 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     - estimates (dict): structure of estimates
     
     Note: Always cite the paper when using this function.
-    """
+    """ 
 
-    # Assign default values
-    parameters = {
-        'gridsize': 100,
-        'method': 'CV',
-        'objective': 'CSR2',
-        'ignore_scale': False,
-        'kfold': 3,
-        'oos_test_date': dates.iloc[-1],
-        'freq': freq,
-        'rotate_PC': True,
-        'demarket_conditionally': False,
-        'demarket_unconditionally': True,
-        'devol_conditionally': False,
-        'devol_unconditionally': True,
-        'plot_dof': True,
-        'plot_coefpaths': True,
-        'plot_objective': True,
-        'line_width': 1.5,
-        'font_size': 10,
-        'L2_max_legends': 20,
-        'L2_sort_loc': 'opt',
-        'L1_log_scale': True,
-        'L2_log_scale': True,
-        'legend_loc': 'best',
-        'results_export': True,
-        'show_plot': False
-    }
-
-    # Parse config and assign default values
-    # parameters = parse_config(parameters, default_config)
+    parameters['oos_test_date'] = dates.iloc[-1]
 
     # We usually maximize an objective (e.g., R^2), except for HJ-distance (GLS) and SSE
     if parameters["objective"] in ['GLS', 'SSE']:
@@ -90,16 +61,15 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     mkt0 = market.copy()
 
     # De-market all excess returns 
-    if parameters['demarket_conditionally']:  # conditionally
+    if parameters['demarket_conditionally']: 
         demarket_ma_window = 3 * parameters['freq']  # use past 3 years to estimate betas
 
         # Placeholder for custom function `demarkcond`
         r0 = demarketcond(re.iloc[idx_train, :], market.iloc[idx_train], demarket_ma_window)
         idx_train = idx_train[demarket_ma_window:]  # drop NaNs
 
-    elif parameters['demarket_unconditionally']:  # unconditionally
-
-        # Placeholder for custom function `demarket`
+    elif parameters['demarket_unconditionally']:  
+        
         r_train, b_train = demarket(re.loc[:tT0, :], market.loc[:tT0])
         r_test = demarket(re.loc[tT0:, :], market.loc[tT0:], b_train)  # use betas estimated in the training sample
         # check if r_test is a dataframe
@@ -138,14 +108,13 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
 
     # Rotate into PC space if requested and change file suffix
     if parameters.get('rotate_PC', False):
-        # Use training sample to form eigenvectors
-        _, _, Q = np.linalg.svd(np.cov(r_train, rowvar=False)) 
-        r_train = np.dot(r_train, Q)
-        r_test = np.dot(r_test, Q)
         anomalies = ['PC' + str(i) for i in range(1, n + 1)]
-        r_train = pd.DataFrame(r_train, index=dates, columns=anomalies)
-        # r_test = pd.DataFrame(r_test, index=dates, columns=anomalies) TODO: Uncomment once OOS data there
-
+        
+        _, _, Q = np.linalg.svd(np.cov(r_train, rowvar=False)) 
+        Q = pd.DataFrame(Q, columns=r_train.columns, index=anomalies)
+        r_train = r_train @ Q.T
+        r_test = r_test @ Q.T
+        
     # Compute first and second moments
     X = regcov(r_train)
     y = np.mean(r_train, axis=0)
@@ -183,7 +152,7 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     kappa2pen = lambda kappa, T, X, p: p['freq'] * np.trace(X) / T / (kappa ** 2)
 
     # Find left and right limits
-    lr = np.arange(1, 22)  # equivalent of 1:21 in MATLAB
+    lr = np.arange(1, 22)
     lm = 1
 
     z = np.empty((n, len(lr)))

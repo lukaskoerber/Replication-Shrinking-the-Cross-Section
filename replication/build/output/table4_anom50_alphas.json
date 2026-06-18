@@ -1,0 +1,30 @@
+{
+  "result_id": "table4_anom50_alphas",
+  "kappa_star": 0.3329958947616904,
+  "N_oos": 3272,
+  "oos_market_sigma": 0.011940613314779051,
+  "char_sparse_nnz": 5,
+  "pc_sparse_nnz": 5,
+  "cells": [
+    {
+      "label": "CAPM",
+      "achieved_alpha": 12.853270549465085,
+      "achieved_se": 5.260421300520767
+    },
+    {
+      "label": "FF6",
+      "achieved_alpha": 8.625617169580641,
+      "achieved_se": 4.897994007427477
+    },
+    {
+      "label": "char_sparse",
+      "achieved_alpha": 11.221047486948645,
+      "achieved_se": 3.8397113365328286
+    },
+    {
+      "label": "pc_sparse",
+      "achieved_alpha": 2.6770437544305405,
+      "achieved_se": 2.6766710357218932
+    }
+  ]
+}

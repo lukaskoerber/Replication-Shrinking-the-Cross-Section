@@ -1,0 +1,6 @@
+# caches and heavy intermediate data arrays — never commit
+# (figures/JSON/tables in output/ ARE committed as the replication deliverables)
+__pycache__/
+.mplcache/
+*.npz
+data/
