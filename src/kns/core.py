@@ -291,7 +291,7 @@ def kappa2pen(kappa, T, trX, freq):
 # ---------------------------------------------------------------------------
 # 7. Data-driven kappa grid  [A-C10]
 # ---------------------------------------------------------------------------
-def build_kappa_grid(X, y, T, freq, gridsize=100):
+def build_kappa_grid(X, y, T, freq, gridsize=100, stabilize_tol=0.01):
     """
     Build the kappa grid with the original data-driven right edge.
 
@@ -300,12 +300,20 @@ def build_kappa_grid(X, y, T, freq, gridsize=100):
       - at each step estimate b via l2est and measure the mean (over assets) of
         the relative coefficient change |Δb| / (1 + |b_prev|);
       - the right edge x_rlim is the largest exponent where that mean still
-        exceeds 0.01 (coefficients not yet stabilized);
+        exceeds `stabilize_tol` (coefficients not yet stabilized);
       - return a log-spaced grid from 2^x_rlim down to 0.01:
             x = logspace(log10(2^x_rlim), log10(0.01), gridsize)
       - and the matching penalty list l = [kappa2pen(x_i, ...)].
 
     [A-C10] data-driven right-edge / coefficient-stabilize rule.
+
+    Parameters
+    ----------
+    stabilize_tol : float, default 0.01
+        Relative-coefficient-change cutoff below which the ridge path counts as
+        "stabilized" when locating the grid's right edge. The default 0.01
+        matches this replication. The reference SCS_L2est.py used 0.001; pass
+        stabilize_tol=0.001 to reproduce that codebase's grid exactly.
 
     Returns
     -------
@@ -321,7 +329,7 @@ def build_kappa_grid(X, y, T, freq, gridsize=100):
         z[:, i - 1], _ = l2est(X, y, l_i, T)
 
     rel_change = np.abs(z[:, 1:] - z[:, :-1]) / (1 + np.abs(z[:, :-1]))
-    not_stable = np.mean(rel_change, axis=0) > 0.01
+    not_stable = np.mean(rel_change, axis=0) > stabilize_tol
     x_rlim = np.nonzero(not_stable)[0]
     assert x_rlim.size > 0, "coefficient-stabilize rule found no right edge"
     right_exp = x_rlim[-1]                      # matches original z[:,1:] indexing

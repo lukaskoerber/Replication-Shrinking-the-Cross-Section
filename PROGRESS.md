@@ -29,6 +29,13 @@ diagnostic — it does not displace the CSR²-selected model.
 
 ## Sessions
 
+### 2026-06-21 — Expose the kappa-grid stabilize tolerance
+
+- Made the data-driven kappa-grid right-edge cutoff a `stabilize_tol` parameter on
+  `build_kappa_grid` and `fit_scs` (default 0.01, matching this replication). Pass
+  `stabilize_tol=0.001` to reproduce the reference `SCS_L2est.py` grid exactly — the
+  previously hard-coded constant is now an explicit, documented knob.
+
 ### 2026-06-21 — Package the replication as the `kns` library
 
 - Restructured the repo into an installable package under `src/kns/` with a `pyproject.toml`

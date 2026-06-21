@@ -296,6 +296,7 @@ def fit_scs(
     gridsize=100,
     cov_shrink="wishart",
     compute_se=True,
+    stabilize_tol=0.01,
 ):
     """
     Fit the SCS stochastic-discount-factor estimator to a panel of returns.
@@ -343,6 +344,10 @@ def fit_scs(
         Flat-Wishart covariance shrink weight. 'wishart' = a=H/(H+T) (the paper).
     compute_se : bool, default True
         Compute eq. (23) posterior standard errors.
+    stabilize_tol : float, default 0.01
+        Coefficient-stabilize cutoff for the data-driven kappa-grid right edge
+        (CV mode). Default 0.01 matches this replication; pass 0.001 to reproduce
+        the reference SCS_L2est.py grid exactly.
 
     Returns
     -------
@@ -399,7 +404,8 @@ def fit_scs(
     cv_curve = None
     weakly_identified = None
     if kappa == "cv":
-        kappa_grid, penalty_list = core.build_kappa_grid(X_fit, mu_fit, T, freq, gridsize)
+        kappa_grid, penalty_list = core.build_kappa_grid(
+            X_fit, mu_fit, T, freq, gridsize, stabilize_tol=stabilize_tol)
         is_curve = np.full(gridsize, np.nan)
         oos_curve = np.full(gridsize, np.nan)
         oos_se_curve = np.full(gridsize, np.nan)
