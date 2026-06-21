@@ -11,9 +11,53 @@ This repository hosts the replication of findings from the paper titled *Shrinki
 For datasets and code, please see [Serhiy Kozak's webpage](https://www.serhiykozak.com/data).
 
 
-## Repository Structure:
-- **scs_main.py**: Run scs_main.py to obtain the replication results.
-- **Data**: The dataset referenced in the paper.
+## The `kns` package
+
+The validated estimator and the full replication are packaged as an installable
+library, `kns`. There is a single source of truth for the numerical engine
+(`kns.core`, `kns.dual_penalty`); the old top-level scripts have been retired.
+
+### Install
+```bash
+pip install -e .            # from the repo root (editable install)
+```
+
+### Fit the SCS estimator to your own return data
+```python
+import pandas as pd
+from kns import fit_scs
+
+returns = pd.read_csv("my_returns.csv", index_col=0, parse_dates=True)  # T x N
+result = fit_scs(returns, objective="CSR2", kappa="cv")   # K-fold CV picks the shrinkage
+
+result.b                # SDF coefficients (eq. 22)
+result.mve_weights      # MVE portfolio weights on your input assets
+result.kappa            # selected shrinkage
+result.cv_curve         # IS/OOS objective vs kappa
+result.predict(returns) # realized MVE/SDF-mimicking portfolio returns
+result.sharpe(returns)  # annualized Sharpe of that portfolio
+```
+`fit_scs` does *no* preprocessing by default — set `demarket=True, devol=True`
+(and pass `market=`) for the paper's market-neutral pipeline. It supports the
+dual L1+L2 penalty (`dual_penalty=True`), the cross-validated-Sharpe objective
+(`objective="SR"`), PC rotation, and a configurable covariance shrink
+(`cov_shrink=`); it raises on unrecoverable misuse and warns when the data leave
+the validated regime (non-daily frequency, `T < 2N`, material covariance shrink).
+Posterior eq.-(23) standard errors are reported as `se` / `tstat_posterior`.
+
+### Reproduce the whole paper replication
+```bash
+python -m kns.reproduce          # every figure/table -> replication/build/output/
+python -m kns.reproduce --list   # available sections
+```
+or in Python: `from kns.reproduce import reproduce_all; reproduce_all()`.
+
+## Repository Structure
+- **`src/kns/`** — the installable package: `core.py` + `dual_penalty.py` (engine),
+  `estimator.py` (`fit_scs`), `reproduce/` (the paper figures/tables, one entry point).
+- **`tests/`** — acceptance + numerical-validation suite (`pytest`).
+- **`replication/`** — the replication plan, report, and committed outputs.
+- **`Data/`** — the datasets referenced in the paper.
 
 # Results
 Comparison of original results from the paper and replication results from the Python script, aligned side-by-side for comparison.

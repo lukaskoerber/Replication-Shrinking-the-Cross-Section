@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kns"
+version = "0.1.0"
+description = "Shrinking the Cross-Section (Kozak, Nagel & Santosh 2020) — SCS SDF estimator + paper replication."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Lukas Koerber" }]
+dependencies = [
+    "numpy>=1.24,<2.0",
+    "pandas>=2.0",
+    "scikit-learn>=1.3",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+kns-reproduce = "kns.reproduce.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: full paper reproduction against the bundled Data/ (needs the repo tree)",
+]

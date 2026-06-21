@@ -26,7 +26,8 @@ in-repo class-A CSVs (Kozak managed portfolios + Ken French factors); no WRDS pu
 | `table4_anom50_alphas` | Table 4 | CAPM 12.35(5.26), FF6 8.71(4.94), char-sparse 9.55(3.95), PC-sparse 4.60(2.22) | **12.85(5.26), 8.63(4.90), 11.22(3.84), 2.68(2.68)** | +4% / −1% / +18% / 1.9pp | **PASS** |
 
 Output artifacts (figures + per-target JSON) are in `replication/build/output/`; the
-reproducible pipeline is in `replication/build/code/`.
+reproducible pipeline is in `replication/build/code/` (since packaged into
+`src/kns/`; run `python -m kns.reproduce`).
 
 ---
 
@@ -109,6 +110,7 @@ The estimates are robust to most pinned choices; the ones that materially shaped
   repo. The built pipeline is dimension-agnostic (the C18 fix already generalizes H), so
   these become tractable if the Kozak WFR/interaction CSVs are later downloaded.
 - **Determinism:** contiguous CV (no shuffling), no RNG; results are reproducible by
-  re-running `replication/build/code/` with the fin_env interpreter.
+  re-running `python -m kns.reproduce` (engine now packaged in `src/kns/`) with
+  the fin_env interpreter.
 - **Hygiene:** `build/data` and `build/output` are gitignored; no data, results, or
   credentials are committed.

@@ -41,8 +41,8 @@ import os
 import numpy as np
 import pandas as pd
 
-import scs_core as core
-import dual_penalty as dp
+from kns import core
+from kns import dual_penalty as dp
 
 # ---------------------------------------------------------------------------
 # Paths / constants
@@ -52,7 +52,7 @@ DATA = os.path.join(ROOT, "Data")
 ANOM_CSV = os.path.join(DATA, "Instruments", "managed_portfolios_anom_d_50.csv")
 FF5_CSV = os.path.join(DATA, "F-F_Research_Data_5_Factors_2x3_daily.csv")
 MOM_CSV = os.path.join(DATA, "F-F_Momentum_Factor_daily.csv")
-OUT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output"))
+OUT = os.path.join(ROOT, "replication", "build", "output")
 
 FREQ = 252
 SPLIT = pd.Timestamp("2005-01-01")

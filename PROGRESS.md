@@ -10,14 +10,16 @@ L2 (ridge) shrinkage is essential, a characteristics-sparse SDF fails while a PC
 SDF succeeds, and the SDF-implied MVE portfolio earns a large, significant out-of-sample
 alpha (2005–2017) against the CAPM and Fama-French models.
 
-The reproducible pipeline is in `replication/build/code/` (a clean port of the original
-repo's L2 estimator plus a newly built dual-penalty estimator); figures, tables, and
-per-target JSON are in `replication/build/output/`. The planning artifacts, ledgers, and
-write-ups are in `replication/` (`plan.md`, `replication_report.md`, `REPLICATION_LOG.md`,
-`results_log.md`, machine-readable `data_manifest.md` / `target_results.md` /
-`task_graph.md`). The original top-level scripts (`scs_main.py`, `SCS_L2est.py`,
-`results_export/`) remain as the pre-existing L2-only replication and are unchanged in
-substance by this work.
+The estimator and the full replication are now packaged as an **installable library**,
+`kns` (under `src/kns/`): a function-first `fit_scs` public API over a single-source-of-truth
+engine (`kns.core` + `kns.dual_penalty`), a `kns.reproduce` package that regenerates every
+figure/table from one entry point (`python -m kns.reproduce`, replacing the old `scs_main.py`),
+a `pytest` suite under `tests/`, and `pyproject.toml`. The old top-level scripts
+(`scs_main.py`, `SCS_L2est.py`, the `load_*`/`utils` modules) have been retired. Figures,
+tables, and per-target JSON still land in `replication/build/output/`; the planning artifacts,
+ledgers, and write-ups remain in `replication/` (`plan.md`, `replication_report.md`,
+`REPLICATION_LOG.md`, `results_log.md`, machine-readable `data_manifest.md` /
+`target_results.md` / `task_graph.md`).
 
 A **scoped extension** lives under `replication/extensions/sr_objective/`: a selectable
 cross-validation objective that maximizes the cross-validated Sharpe ratio, alongside the
@@ -26,6 +28,20 @@ existing cross-sectional R² objective. It is now **implemented and verified** (
 diagnostic — it does not displace the CSR²-selected model.
 
 ## Sessions
+
+### 2026-06-21 — Package the replication as the `kns` library
+
+- Restructured the repo into an installable package under `src/kns/` with a `pyproject.toml`
+  (`pip install -e .`, console script `kns-reproduce`). Single source of truth for the
+  numerical engine: `kns.core` + `kns.dual_penalty`.
+- Added a **function-first public API**, `fit_scs(...) -> SCSResult`, a validated wrapper over
+  the engine: opt-in de-market/de-vol (off by default), CV shrinkage selection, CSR²/SR
+  objectives, dual L1+L2 penalty, posterior eq.-(23) standard errors, and guardrails that
+  raise on misuse / warn outside the validated daily market-neutral regime.
+- Replaced `scs_main.py` with `kns.reproduce`: a topologically-ordered set of sections driven
+  by one entry point (`python -m kns.reproduce`) that regenerates every figure/table.
+- Added a `pytest` suite (`tests/`: packaging + `fit_scs` behaviour) and refreshed the README.
+- Retired the old top-level scripts (`scs_main.py`, `SCS_L2est.py`, `load_*`, `utils`).
 
 ### 2026-06-18 — Extension plan: cross-validated Sharpe-ratio objective
 

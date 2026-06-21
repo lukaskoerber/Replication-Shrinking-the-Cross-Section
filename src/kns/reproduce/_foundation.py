@@ -18,16 +18,10 @@ A compact JSON summary is printed to stdout.
 
 import json
 import os
-import sys
 
 import numpy as np
 
-# Make scs_core importable regardless of cwd.
-CODE_DIR = os.path.dirname(os.path.abspath(__file__))
-if CODE_DIR not in sys.path:
-    sys.path.insert(0, CODE_DIR)
-
-from scs_core import (  # noqa: E402
+from kns.core import (
     load_anom50_daily,
     demarket,
     devol,
@@ -37,7 +31,10 @@ from scs_core import (  # noqa: E402
     effective_dof,
 )
 
-PROJECT_ROOT = "/Users/lukas/Workspace Lukas/Replication-Shrinking-the-Cross-Section"
+# Repo root = three levels up from src/kns/reproduce/ (matches the other drivers).
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 DATA_PATH = os.path.join(
     PROJECT_ROOT, "Data", "Instruments", "managed_portfolios_anom_d_50.csv"
 )

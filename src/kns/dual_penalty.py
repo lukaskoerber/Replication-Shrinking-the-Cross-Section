@@ -59,7 +59,7 @@ from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import enet_path as _sk_enet_path
 from sklearn.exceptions import ConvergenceWarning
 
-import scs_core as core
+from . import core
 
 # Deterministic solver controls.
 _TOL = 1e-12

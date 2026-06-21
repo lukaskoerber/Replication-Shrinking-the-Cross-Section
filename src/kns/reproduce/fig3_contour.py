@@ -44,8 +44,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-import scs_core as core
-import dual_penalty as dp
+from kns import core
+from kns import dual_penalty as dp
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 OUT = os.path.join(ROOT, "replication", "build", "output")
